@@ -63,32 +63,126 @@ CREATE TABLE Payments (
     FOREIGN KEY (BillID) REFERENCES Bills(BillID)      -- Links to Bills table
 );
 
--- Insert sample patient data
-INSERT INTO Patients (FirstName, LastName, DateOfBirth, Address, PhoneNumber, Email)
-VALUES
-('John', 'Doe', '1985-04-12', '123 Elm St, Springfield, IL', '555-1234', 'john.doe@example.com'),
-('Jane', 'Smith', '1990-08-22', '456 Oak St, Springfield, IL', '555-5678', 'jane.smith@example.com');
+-- Stored Procedures
 
--- Insert sample insurance information
-INSERT INTO InsuranceInformation (PatientID, InsuranceProvider, PolicyNumber, Copay, Deductible, CoveredServices)
-VALUES
-(1, 'Blue Cross', 'BC12345', 20.00, 500.00, 'General Checkups, Emergency Services'),
-(2, 'Aetna', 'AE98765', 15.00, 300.00, 'General Checkups, Lab Tests');
+-- Patients Table Procedures
+DELIMITER //
+CREATE PROCEDURE CreatePatient (IN fName VARCHAR(100), IN lName VARCHAR(100), IN dob DATE, IN addr VARCHAR(255), IN phone VARCHAR(20), IN email VARCHAR(100))
+BEGIN
+    INSERT INTO Patients (FirstName, LastName, DateOfBirth, Address, PhoneNumber, Email)
+    VALUES (fName, lName, dob, addr, phone, email);
+END //
 
--- Insert sample copay and deductible information
-INSERT INTO CopayDeductible (InsuranceID, PatientID, CopayAmount, DeductibleAmount, RemainingDeductible)
-VALUES
-(1, 1, 20.00, 500.00, 300.00),
-(2, 2, 15.00, 300.00, 150.00);
+CREATE PROCEDURE UpdatePatient (IN pID INT, IN fName VARCHAR(100), IN lName VARCHAR(100), IN addr VARCHAR(255), IN phone VARCHAR(20), IN email VARCHAR(100))
+BEGIN
+    UPDATE Patients
+    SET FirstName = fName, LastName = lName, Address = addr, PhoneNumber = phone, Email = email
+    WHERE PatientID = pID;
+END //
 
--- Insert sample bill data
-INSERT INTO Bills (PatientID, TotalAmount, InsurancePaid, AmountOwed, BillDate, BillStatus)
-VALUES
-(1, 500.00, 200.00, 300.00, '2024-12-01', 'Pending'),
-(2, 300.00, 150.00, 150.00, '2024-12-02', 'Pending');
+CREATE PROCEDURE DeletePatient (IN pID INT)
+BEGIN
+    DELETE FROM Patients WHERE PatientID = pID;
+END //
 
--- Insert sample payment data
-INSERT INTO Payments (PatientID, BillID, PaymentAmount, PaymentMethod, PaymentDate, PaymentStatus)
-VALUES
-(1, 1, 200.00, 'Credit Card', '2024-12-03', 'Completed'),
-(2, 2, 150.00, 'Cash', '2024-12-04', 'Completed');
+CREATE PROCEDURE RetrievePatients ()
+BEGIN
+    SELECT * FROM Patients;
+END //
+
+-- InsuranceInformation Table Procedures
+CREATE PROCEDURE CreateInsurance (IN pID INT, IN provider VARCHAR(255), IN policy VARCHAR(255), IN copay DECIMAL(10, 2), IN deductible DECIMAL(10, 2), IN services TEXT)
+BEGIN
+    INSERT INTO InsuranceInformation (PatientID, InsuranceProvider, PolicyNumber, Copay, Deductible, CoveredServices)
+    VALUES (pID, provider, policy, copay, deductible, services);
+END //
+
+CREATE PROCEDURE UpdateInsurance (IN iID INT, IN provider VARCHAR(255), IN policy VARCHAR(255), IN copay DECIMAL(10, 2), IN deductible DECIMAL(10, 2), IN services TEXT)
+BEGIN
+    UPDATE InsuranceInformation
+    SET InsuranceProvider = provider, PolicyNumber = policy, Copay = copay, Deductible = deductible, CoveredServices = services
+    WHERE InsuranceID = iID;
+END //
+
+CREATE PROCEDURE DeleteInsurance (IN iID INT)
+BEGIN
+    DELETE FROM InsuranceInformation WHERE InsuranceID = iID;
+END //
+
+CREATE PROCEDURE RetrieveInsurance ()
+BEGIN
+    SELECT * FROM InsuranceInformation;
+END //
+
+-- CopayDeductible Table Procedures
+CREATE PROCEDURE CreateCopayDeductible (IN iID INT, IN pID INT, IN copay DECIMAL(10, 2), IN deductible DECIMAL(10, 2), IN remaining DECIMAL(10, 2))
+BEGIN
+    INSERT INTO CopayDeductible (InsuranceID, PatientID, CopayAmount, DeductibleAmount, RemainingDeductible)
+    VALUES (iID, pID, copay, deductible, remaining);
+END //
+
+CREATE PROCEDURE UpdateCopayDeductible (IN cdID INT, IN copay DECIMAL(10, 2), IN deductible DECIMAL(10, 2), IN remaining DECIMAL(10, 2))
+BEGIN
+    UPDATE CopayDeductible
+    SET CopayAmount = copay, DeductibleAmount = deductible, RemainingDeductible = remaining
+    WHERE CopayDeductibleID = cdID;
+END //
+
+CREATE PROCEDURE DeleteCopayDeductible (IN cdID INT)
+BEGIN
+    DELETE FROM CopayDeductible WHERE CopayDeductibleID = cdID;
+END //
+
+CREATE PROCEDURE RetrieveCopayDeductible ()
+BEGIN
+    SELECT * FROM CopayDeductible;
+END //
+
+-- Bills Table Procedures
+CREATE PROCEDURE CreateBill (IN pID INT, IN total DECIMAL(10, 2), IN insurancePaid DECIMAL(10, 2), IN owed DECIMAL(10, 2), IN date DATE, IN status VARCHAR(50))
+BEGIN
+    INSERT INTO Bills (PatientID, TotalAmount, InsurancePaid, AmountOwed, BillDate, BillStatus)
+    VALUES (pID, total, insurancePaid, owed, date, status);
+END //
+
+CREATE PROCEDURE UpdateBill (IN bID INT, IN total DECIMAL(10, 2), IN insurancePaid DECIMAL(10, 2), IN owed DECIMAL(10, 2), IN status VARCHAR(50))
+BEGIN
+    UPDATE Bills
+    SET TotalAmount = total, InsurancePaid = insurancePaid, AmountOwed = owed, BillStatus = status
+    WHERE BillID = bID;
+END //
+
+CREATE PROCEDURE DeleteBill (IN bID INT)
+BEGIN
+    DELETE FROM Bills WHERE BillID = bID;
+END //
+
+CREATE PROCEDURE RetrieveBills ()
+BEGIN
+    SELECT * FROM Bills;
+END //
+
+-- Payments Table Procedures
+CREATE PROCEDURE CreatePayment (IN pID INT, IN bID INT, IN amount DECIMAL(10, 2), IN method VARCHAR(50), IN date DATE, IN status VARCHAR(50))
+BEGIN
+    INSERT INTO Payments (PatientID, BillID, PaymentAmount, PaymentMethod, PaymentDate, PaymentStatus)
+    VALUES (pID, bID, amount, method, date, status);
+END //
+
+CREATE PROCEDURE UpdatePayment (IN payID INT, IN amount DECIMAL(10, 2), IN method VARCHAR(50), IN status VARCHAR(50))
+BEGIN
+    UPDATE Payments
+    SET PaymentAmount = amount, PaymentMethod = method, PaymentStatus = status
+    WHERE PaymentID = payID;
+END //
+
+CREATE PROCEDURE DeletePayment (IN payID INT)
+BEGIN
+    DELETE FROM Payments WHERE PaymentID = payID;
+END //
+
+CREATE PROCEDURE RetrievePayments ()
+BEGIN
+    SELECT * FROM Payments;
+END //
+DELIMITER ;
